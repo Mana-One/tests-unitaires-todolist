@@ -1,4 +1,4 @@
-import { Result } from "../commons/Result";
+import { Result } from "../commons";
 
 interface UserProps {
     name: string,
