@@ -1,9 +1,9 @@
 export class Result<T> {
     public isSuccess: boolean;
-    public error: Error | null;
-    private value: T;
+    public error?: string;
+    private value?: T;
 
-    private constructor(isSuccess: boolean, error: Error | null, value?: T){
+    private constructor(isSuccess: boolean, error?: string, value?: T){
         if((isSuccess === true && error !== undefined) ||
             isSuccess === false && error === undefined) {
 
@@ -11,8 +11,8 @@ export class Result<T> {
         }
 
         this.isSuccess = isSuccess;
-        this.error = !!error === false ? null : error;
-        this.value = value;
+        this.error = error;
+        this.value = <T>value;
 
         Object.freeze(this);
     }
@@ -21,14 +21,17 @@ export class Result<T> {
         if(this.isSuccess === false){
             throw new Error("No value to retrieve if failed");
         }
+        if(this.value === undefined){
+            throw new Error("No value to retrieve");
+        }
         return this.value;
     }
 
     public static ok<V>(value: V): Result<V> {
-        return new Result<V>(true, null, value);
+        return new Result<V>(true, undefined, value);
     }
 
-    public static ko<V>(error: Error): Result<V> {
+    public static ko<V>(error: string): Result<V> {
         return new Result<V>(false, error);
     }
 }
