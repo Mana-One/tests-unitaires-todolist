@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc && babel src -d bin",
     "test": "npm run test:e",
-    "test:verbose": "npm run test:e --verbose",
+    "test:verbose": "npm run test:e -- --verbose",
     "test:e": "jest test/entities"
   },
   "author": "",
