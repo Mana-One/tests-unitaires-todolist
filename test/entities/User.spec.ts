@@ -1,4 +1,4 @@
-import { User } from "../../src/entities/User";
+import { User } from "../../src/entities";
 
 describe("User entity", function(){
     const validDate = new Date();
