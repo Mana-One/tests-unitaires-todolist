@@ -1,18 +1,24 @@
 import { Result } from "../commons";
+import { IEmailService } from "../services";
 import { Item } from "./Item";
 import { User } from "./User";
 
 export class ToDoList {
     static readonly MAX_ITEMS = 10;
+    static readonly NOTIFICATION_THRESHOLD = 8;
     static readonly TIMEOUT = 30 * 60 * 1000; // in ms
     private items: Array<Item>;
 
-    constructor(private owner: User){
+    constructor(private owner: User, private notifier: IEmailService){
         this.items = new Array<Item>();
     }
 
     public getItems(): Array<Item> {
         return this.items;
+    }
+
+    public getOwner(): User {
+        return this.owner;
     }
 
     private itemExists(item: Item): boolean {
@@ -45,6 +51,9 @@ export class ToDoList {
         }
 
         this.items.push(item);
+        if(this.items.length === ToDoList.NOTIFICATION_THRESHOLD){
+            this.notifier.notifyTwoItemsRemaining(this.owner);
+        }
         return Result.ok<Item>(item);
     }
 }

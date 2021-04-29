@@ -2,16 +2,24 @@ import { Item } from "../../src/entities/Item";
 import { ToDoList } from "../../src/entities/ToDoList"
 import { User } from "../../src/entities/User";
 
+const notifyTwoItemsRemaining = jest.fn()
+.mockImplementation(async function(user: User): Promise<void>{})
+
 describe("ToDoList entity", function(){
     const birthdate = new Date();
     birthdate.setFullYear(birthdate.getFullYear() - 13);
+
+    const notifier = {
+        notifyTwoItemsRemaining
+    }
+
     const list = new ToDoList(new User(
         "name",
         "lastname",
         "mail@mail.mail",
         "123456789",
         birthdate
-    ));
+    ), notifier);
 
     const props = {
         name: "name",
@@ -21,6 +29,7 @@ describe("ToDoList entity", function(){
     const item = Item.build(props).getValue();
 
     beforeEach(function() {
+        notifyTwoItemsRemaining.mockClear();
         const array = list.getItems();
         while(array.length){
             array.pop();
@@ -34,6 +43,7 @@ describe("ToDoList entity", function(){
         expect(res.error).toBe(undefined);
         expect(res.getValue()).toBeTruthy();
         expect(list.getItems().length).toBe(1);
+        expect(notifyTwoItemsRemaining).toHaveBeenCalledTimes(0);
     })
 
     it("should not add already existing item", function(){
@@ -48,6 +58,7 @@ describe("ToDoList entity", function(){
         expect(res.isSuccess).toBe(false);
         expect(res.error).toBe("Already exists");        
         expect(list.getItems().length).toBe(1);
+        expect(notifyTwoItemsRemaining).toHaveBeenCalledTimes(0);
     })
 
     it("should not add item if max capacity is reached", function(){
@@ -73,6 +84,8 @@ describe("ToDoList entity", function(){
         expect(res.isSuccess).toBe(false);
         expect(res.error).toBe("Max capacity reached");        
         expect(list.getItems().length).toBe(10);
+        expect(notifyTwoItemsRemaining).toHaveBeenCalledTimes(1);
+        expect(notifyTwoItemsRemaining).toHaveBeenCalledWith(list.getOwner());
     })
 
     it("should not add a new item before timeout", function(){
@@ -88,5 +101,33 @@ describe("ToDoList entity", function(){
         expect(res.isSuccess).toBe(false);
         expect(res.error).toBe("Must wait timeout end");
         expect(list.getItems().length).toBe(1);
+        expect(notifyTwoItemsRemaining).toHaveBeenCalledTimes(0);        
+    })
+
+    it("should send mail when list has reached threshold", function() {
+        let time = item.getCreatedAt().getTime();
+        for(let i = 0; i < ToDoList.NOTIFICATION_THRESHOLD - 1; i++){
+            const item = Item.build({
+                ...props,
+                name: `name${i}`,
+                createdAt: new Date(time)
+            })
+            .getValue();
+            list.addItem(item);
+            time += ToDoList.TIMEOUT;
+        }
+
+        const item2 = Item.build({
+            ...props,
+            name: "name",
+            createdAt: new Date(time)
+        }).getValue();
+        const res = list.addItem(item2);
+
+        expect(res.isSuccess).toBe(true);
+        expect(res.error).toBe(undefined);
+        expect(res.getValue()).toBeTruthy();
+        expect(notifyTwoItemsRemaining).toHaveBeenCalledTimes(1);
+        expect(notifyTwoItemsRemaining).toHaveBeenCalledWith(list.getOwner());
     })
 })
