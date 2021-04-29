@@ -9,7 +9,7 @@ interface UserProps {
 }
 
 export class User {
-    constructor(
+    private constructor(
         private name: string,
         private lastname: string,
         private mail: string,
